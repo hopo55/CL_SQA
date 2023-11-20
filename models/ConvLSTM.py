@@ -8,53 +8,36 @@ class ConvLSTM(nn.Module):
 
         self.batchnorm = batchnorm
         self.dropout = dropout
+        self.dropout_rate = dropout_rate
         
-        # First convolutional layer
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=num_feat_map, kernel_size=(1, 3), padding=(0, 1))
+        self.conv1 = nn.Conv2d(1, num_feat_map, kernel_size=(1, 3), padding='same')
         self.bn1 = nn.BatchNorm2d(num_feat_map)
-        self.drop1 = nn.Dropout(dropout_rate)
-
-        # Second convolutional layer
-        self.conv2 = nn.Conv2d(in_channels=num_feat_map, out_channels=num_feat_map, kernel_size=(1, 3), padding=(0, 1))
+        self.conv2 = nn.Conv2d(num_feat_map, num_feat_map, kernel_size=(1, 3), padding='same')
         self.bn2 = nn.BatchNorm2d(num_feat_map)
-        self.drop2 = nn.Dropout(dropout_rate)
-        
-        # LSTM layer
-        self.lstm = nn.LSTM(input_size=num_feat_map * dim, hidden_size=32, batch_first=True)
-        self.drop3 = nn.Dropout(dropout_rate)
-
-        # Fully connected layer
+        self.fc_size = num_feat_map * dim
+        self.lstm = nn.LSTM(input_size=self.fc_size, hidden_size=32, batch_first=True)
         self.fc = nn.Linear(32, num_classes_1)
 
     def forward(self, x):
-        # First convolutional block
         x = F.relu(self.conv1(x))
         if self.batchnorm:
             x = self.bn1(x)
         if self.dropout:
-            x = self.drop1(x)
+            x = F.dropout(x, p=self.dropout_rate)
 
-        # Second convolutional block
         x = F.relu(self.conv2(x))
         if self.batchnorm:
             x = self.bn2(x)
         if self.dropout:
-            x = self.drop2(x)
+            x = F.dropout(x, p=self.dropout_rate)
 
-        # Prepare for LSTM
-        B, C, H, W = x.size()
-        x = x.permute(0, 3, 1, 2)  # Swap dimensions for LSTM
-        x = x.contiguous().view(B, W, -1)
+        # Adjusting the dimensions for LSTM input
+        x = x.permute(0, 2, 1, 3)  # PyTorch permute order (batch_size, seq_len, num_channels, features)
+        x = x.view(x.size(0), x.size(1), -1)  # Flatten the dimensions except for batch and seq_len
 
-        # LSTM layer
-        x, _ = self.lstm(x)
-        if self.dropout:
-            x = self.drop3(x[:, -1, :])  # Use the last time-step
-        else:
-            x = x[:, -1, :]
-
-        # Fully connected layer
-        x = F.softmax(self.fc(x), dim=1)
+        x, (hn, cn) = self.lstm(x)  # We only use the output of the last layer of LSTM
+        x = self.fc(x[:, -1, :])  # Get the last output for classification
+        # x = F.softmax(x, dim=1)
 
         return x
 

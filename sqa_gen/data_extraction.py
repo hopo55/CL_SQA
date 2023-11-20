@@ -8,15 +8,20 @@ def read_opp_files(datapath, filelist, cols, label2id):
     for filename in filelist:
         with open(datapath +'/%s' % filename, 'r') as f:
             reader = csv.reader(f, delimiter=' ')
+            idx_ori = 0
+            idx_target = 0
             for line in reader:
                 elem = []
+                idx_ori += 1
                 for ind in cols:
+                    idx_target += 1
                     elem.append(line[ind])
                 # we can skip lines that contain NaNs, as they occur in blocks at the start
                 # and end of the recordings.
                 if sum([x == 'NaN' for x in elem]) == 0:
                     data.append([float(x) / 1000 for x in elem[:-1]])
                     labels.append(label2id[elem[-1]])
+            
     return {'inputs': np.asarray(data), 'targets': np.asarray(labels, dtype=int)+1}
 
 
@@ -257,7 +262,6 @@ def series2graph(label_series, label_list, show_graph = True, show_other = False
     prev_state = None
     
     for idx, state in enumerate(label_series):
-        # print("state : ", state)
         if prev_state!= state:
             state_list.append(state)
             start_time.append(idx/sample_freq)
@@ -285,4 +289,4 @@ def series2graph(label_series, label_list, show_graph = True, show_other = False
     # return state_list, state_duration, start_time   
     state_index = np.arange(len(state_list))
 
-    return np.array([state_index, state_list, state_duration, start_time])   # state_list, state_duration, start_time     
+    return [state_index, state_list, state_duration, start_time]   # state_list, state_duration, start_time     
