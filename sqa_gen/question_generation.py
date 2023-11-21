@@ -1,5 +1,53 @@
+import json
+import random
+import numpy as np
+from pattern import en
+from sqa_gen.functional_program import *
 
-
+# Alternative approach: specify the tense (https://www.clips.uantwerpen.be/pages/pattern-en)
+def fixSentenceTense(question,actions,relations,combinators):
+    
+    text = question[0]
+    actionCount = 1
+    
+    #Replace the actions
+    for action in actions:
+        # verb should be first word of action
+        # swd: if there's only one word, then handle differently
+        action_split = action.split(' ')
+        verb = action_split[0] 
+        # get tense:
+        verb = en.conjugate(verb, tense=question[actionCount][0], person=question[actionCount][1], number=question[actionCount][2])
+        replacedAction = '<A'+str(actionCount)+'>'
+        if len( action_split )== 1:
+            text = text.replace(
+                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], 
+                                                   verb)
+        else:
+            text = text.replace(
+                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], 
+                                                   verb + action[action.find(' '):])
+        actionCount = actionCount + 1
+    
+    #Replace the relations
+    relationCount = 1
+    for relation in relations:
+        replacedRelation = '[R'+str(relationCount)+']'
+#         print("Before replacement ("+replacedRelation+"): ", text)
+        text = text.replace(text[text.find(replacedRelation):(text.find(replacedRelation)+len(replacedRelation))], 
+                                               relation)
+#         print("After replacement: ",text)
+        relationCount = relationCount + 1
+    
+    #Replace the combinators
+    combinatorCount = 1
+    for combinator in combinators:
+        replacedCombinator = '[C'+str(combinatorCount)+']'
+        text = text.replace(text[text.find(replacedCombinator):(text.find(replacedCombinator)+len(replacedCombinator))], 
+                                               combinator)
+        combinatorCount = combinatorCount + 1
+        
+    return text
 
 def question_generator(scene_lists, scene_lists_pred,
                        question_family_file, 
@@ -775,29 +823,81 @@ def question_generator(scene_lists, scene_lists_pred,
         question_summary(q_counter, q_all_num, q_id)
         
         
-    if source_data == 'opp':  ## only generate while question for opp data
-        # =========================== question 12 ===========================
-        # for question 12
-        q_id = 12
-        q_counter = 0
-        q_all_num = len(unique_actions)**0 * len(relation_family)**0 * len(logic_combinator_family)**0  * len(unique_loc)**1
+    # =========================== question 12 ===========================
+    # for question 12
+    q_id = 12
+    q_counter = 0
+    q_all_num = len(unique_actions)**0 * len(relation_family)**0 * len(logic_combinator_family)**0  * len(unique_loc)**1
 
-        for action_1 in unique_loc:
+    for action_1 in unique_loc:
 
-            actions = [label_list[1][int(action_1)-1]]
+        actions = [label_list[1][int(action_1)-1]]
+
+        q_f_nlp = question_family['questions'][q_id]['texts']
+        question_id = random.randint(0,len(q_f_nlp)-1)
+        question_nlp = q_f_nlp[question_id]
+
+#         question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+        question_nlp = fixSentenceTense(question_nlp, actions, [], []) 
+
+        # Try generating questions for all possible combinations
+        try:
+            ans_sm = function_families[q_id](action_1, 
+                                                scene_lists)
+            ans_nlp = label_list[0][int(ans_sm)-1]
+
+    #         print(question_nlp, ans_nlp)
+            question_family_index.append(q_id)
+            question_nl.append(question_nlp)
+            answer_nl.append(ans_nlp)
+            question_struct.append(str(q_id)+'_'+str(actions) )
+
+            # Try generating answers for the question
+            try:
+                ans_sm_p = function_families[q_id](action_1, 
+                                                scene_lists_pred, valid_ext = True)
+                ans_nlp_p = label_list[0][int(ans_sm_p)-1]
+            except ValueError:
+                ans_nlp_p = 'Invalid'
+            answer_nl_p.append(ans_nlp_p)
+
+            q_counter += 1
+        except ValueError:  ####### The question is not valid in the context
+            pass
+
+
+    if diagnose:
+        question_summary(q_counter, q_all_num, q_id)
+        
+        
+    # =========================== question 13 ===========================
+    # for question 13
+    q_id = 13
+    q_counter = 0
+    q_all_num = len(unique_actions)**1 * len(relation_family)**0 * len(logic_combinator_family)**0  * len(unique_loc)**1
+
+    for action_1 in unique_actions:
+        for action_2 in unique_loc:
+
+            actions = [label_list[0][int(action_1)-1],label_list[1][int(action_2)-1]]
+            #action_1_nlp = label_list[0][int(action_1)-1]
+            #action_2_nlp = label_list[1][int(action_2)-1]
 
             q_f_nlp = question_family['questions'][q_id]['texts']
             question_id = random.randint(0,len(q_f_nlp)-1)
             question_nlp = q_f_nlp[question_id]
-
-    #         question_nlp = question_nlp.replace('<A1>', action_1_nlp)
             question_nlp = fixSentenceTense(question_nlp, actions, [], []) 
+
+            #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+            #question_nlp = question_nlp.replace('<A2>', action_2_nlp)
 
             # Try generating questions for all possible combinations
             try:
-                ans_sm = function_families[q_id](action_1, 
-                                                 scene_lists)
-                ans_nlp = label_list[0][int(ans_sm)-1]
+                ans_sm = function_families[q_id](action_1, action_2, 
+                                                    scene_lists,
+                                                    question_validation)
+                ans_sm = str( ans_sm )
+                ans_nlp = ans_sm
 
         #         print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
@@ -807,9 +907,10 @@ def question_generator(scene_lists, scene_lists_pred,
 
                 # Try generating answers for the question
                 try:
-                    ans_sm_p = function_families[q_id](action_1, 
-                                                 scene_lists_pred, valid_ext = True)
-                    ans_nlp_p = label_list[0][int(ans_sm_p)-1]
+                    ans_sm_p = function_families[q_id](action_1, action_2, 
+                                                    scene_lists_pred,
+                                                    question_validation = False, valid_ext = True)
+                    ans_nlp_p = str(ans_sm_p)
                 except ValueError:
                     ans_nlp_p = 'Invalid'
                 answer_nl_p.append(ans_nlp_p)
@@ -819,63 +920,8 @@ def question_generator(scene_lists, scene_lists_pred,
                 pass
 
 
-        if diagnose:
-            question_summary(q_counter, q_all_num, q_id)
-        
-        
-    if source_data == 'opp':  ## only generate while question for opp data
-        # =========================== question 13 ===========================
-        # for question 13
-        q_id = 13
-        q_counter = 0
-        q_all_num = len(unique_actions)**1 * len(relation_family)**0 * len(logic_combinator_family)**0  * len(unique_loc)**1
-
-        for action_1 in unique_actions:
-            for action_2 in unique_loc:
-
-                actions = [label_list[0][int(action_1)-1],label_list[1][int(action_2)-1]]
-                #action_1_nlp = label_list[0][int(action_1)-1]
-                #action_2_nlp = label_list[1][int(action_2)-1]
-
-                q_f_nlp = question_family['questions'][q_id]['texts']
-                question_id = random.randint(0,len(q_f_nlp)-1)
-                question_nlp = q_f_nlp[question_id]
-                question_nlp = fixSentenceTense(question_nlp, actions, [], []) 
-
-                #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
-                #question_nlp = question_nlp.replace('<A2>', action_2_nlp)
-
-                # Try generating questions for all possible combinations
-                try:
-                    ans_sm = function_families[q_id](action_1, action_2, 
-                                                     scene_lists,
-                                                     question_validation)
-                    ans_sm = str( ans_sm )
-                    ans_nlp = ans_sm
-
-            #         print(question_nlp, ans_nlp)
-                    question_family_index.append(q_id)
-                    question_nl.append(question_nlp)
-                    answer_nl.append(ans_nlp)
-                    question_struct.append(str(q_id)+'_'+str(actions) )
-
-                    # Try generating answers for the question
-                    try:
-                        ans_sm_p = function_families[q_id](action_1, action_2, 
-                                                     scene_lists_pred,
-                                                     question_validation = False, valid_ext = True)
-                        ans_nlp_p = str(ans_sm_p)
-                    except ValueError:
-                        ans_nlp_p = 'Invalid'
-                    answer_nl_p.append(ans_nlp_p)
-
-                    q_counter += 1
-                except ValueError:  ####### The question is not valid in the context
-                    pass
-
-
-        if diagnose:
-            question_summary(q_counter, q_all_num, q_id)
+    if diagnose:
+        question_summary(q_counter, q_all_num, q_id)
         
         
 

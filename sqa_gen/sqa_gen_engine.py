@@ -8,6 +8,7 @@ import torch
 from sqa_gen.data_extraction import extract_data_from_file, data_split_tools, series2graph
 from sqa_gen.train_model import train_opp_model
 from models.ConvLSTM import ConvLSTM
+from sqa_gen.question_generation import question_generator
 
 def sqa_gen_engine(args,
                    file_list,

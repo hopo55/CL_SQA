@@ -258,10 +258,11 @@ def series2graph(label_series, label_list, show_graph = True, show_other = False
     
     state_list = []
     state_duration = []
-    start_time = []
+    start_time = [] # hz to sec = idx/sample_freq = sec
     prev_state = None
     
     for idx, state in enumerate(label_series):
+
         if prev_state!= state:
             state_list.append(state)
             start_time.append(idx/sample_freq)
@@ -271,7 +272,7 @@ def series2graph(label_series, label_list, show_graph = True, show_other = False
     state_duration.pop(0)
     state_duration.append(len(label_series)/sample_freq)
     state_duration = np.array(state_duration) - np.array(start_time)
-    
+
     if not show_other:
         other_list = []
         for idx, state in enumerate(state_list):

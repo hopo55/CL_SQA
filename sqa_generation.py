@@ -58,7 +58,7 @@ def gen_main():
                                     save_model_folder = args.save_model_folder,
                                     sqa_data_name = save_file,
                                     window_size = args.window_size, stride = args.stride,
-                                    question_family_file = 'sqa_data_gen/question_family.json',
+                                    question_family_file = 'sqa_gen/question_family.json',
                                     show_other = False  # not include "other" in activity list scene_list
                                     )
 
