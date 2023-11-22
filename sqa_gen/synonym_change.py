@@ -1,6 +1,10 @@
+import random
+import nltk
+# nltk.download()
+nltk.download('punkt')
+
 from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-import random
 
 def synonym_change(question_nl):
     

@@ -24,7 +24,8 @@ def fc_filter_action_type(actionID , scene_lists):
         return [None, scene_lists[1]]
     
     # scene_list_1을 텐서로 변환
-    scene_list_1 = [torch.tensor(element) for element in scene_list_1]
+    # scene_list_1 = [torch.tensor(element) for element in scene_list_1]
+    scene_list_1 = [element.clone().detach() if torch.is_tensor(element) else torch.tensor(element) for element in scene_list_1]
     scene_list_1 = torch.stack(scene_list_1, dim=0)
     
     action_ind = scene_list_1[1, :] == actionID

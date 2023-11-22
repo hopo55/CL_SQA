@@ -403,10 +403,10 @@ def question_generator(scene_lists, scene_lists_pred,
     q_counter = 0
     q_all_num = len(unique_actions)**3 * len(relation_family)**2 * len(logic_combinator_family)**1 
 
-    for c_logic_1 in logic_combinator_family:
-        for relation_1 in relation_family:
-            for relation_2 in relation_family:
-                for action_1 in unique_actions:
+    for c_logic_1 in tqdm(logic_combinator_family):
+        for relation_1 in tqdm(relation_family):
+            for relation_2 in tqdm(relation_family):
+                for action_1 in tqdm(unique_actions):
                     for action_2 in unique_actions:
                         if action_1 == action_2: # avoid meaningless questions
                             continue
@@ -444,10 +444,10 @@ def question_generator(scene_lists, scene_lists_pred,
                                                                  scene_lists,
                                                                  question_validation) 
                                 ans_sm = str(ans_sm)
-                #                 ans_nlp = answer_dict[ans_sm]
+                                # ans_nlp = answer_dict[ans_sm]
                                 ans_nlp = ans_sm
 
-                                        #         print(question_nlp, ans_nlp)
+                                # print(question_nlp, ans_nlp)
                                 question_family_index.append(q_id)
                                 question_nl.append(question_nlp)
                                 answer_nl.append(ans_nlp)
@@ -469,11 +469,8 @@ def question_generator(scene_lists, scene_lists_pred,
                             except ValueError:  ####### The question is not valid in the context
                                 pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id) 
-
-
 
 
     # =========================== question 6 ===========================
@@ -493,7 +490,6 @@ def question_generator(scene_lists, scene_lists_pred,
             q_f_nlp = question_family['questions'][q_id]['texts']
             question_id = random.randint(0,len(q_f_nlp)-1)
             question_nlp = q_f_nlp[question_id]
-
             
             question_nlp = fixSentenceTense(question_nlp, actions, relations, []) 
             #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
@@ -504,11 +500,11 @@ def question_generator(scene_lists, scene_lists_pred,
                 ans_sm = function_families[q_id](action_1,
                                                  relation_1, 
                                                  scene_lists)
-    #             ans_sm = str(ans_sm)
-        #                 ans_nlp = answer_dict[ans_sm]
+                # ans_sm = str(ans_sm)
+                # ans_nlp = answer_dict[ans_sm]
                 ans_nlp = label_list[0][int(ans_sm)-1]
 
-            #         print(question_nlp, ans_nlp)
+                # print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
@@ -528,7 +524,6 @@ def question_generator(scene_lists, scene_lists_pred,
             except ValueError:  ####### The question is not valid in the context
                 pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
 
@@ -546,7 +541,6 @@ def question_generator(scene_lists, scene_lists_pred,
                 for action_2 in unique_actions:
                     if action_2 == action_1: # avoid meaningless questions
                         continue
-                    
 
                     actions = [label_list[0][int(action_1)-1],label_list[0][int(action_2)-1]] 
                     #action_1_nlp = label_list[0][int(action_1)-1]
@@ -570,10 +564,10 @@ def question_generator(scene_lists, scene_lists_pred,
                                                          scene_lists,
                                                          question_validation) 
 
-        #                 ans_nlp = answer_dict[ans_sm]
+                        # ans_nlp = answer_dict[ans_sm]
                         ans_nlp = label_list[0][int(ans_sm)-1]
 
-                #         print(question_nlp, ans_nlp)
+                        # print(question_nlp, ans_nlp)
                         question_family_index.append(q_id)
                         question_nl.append(question_nlp)
                         answer_nl.append(ans_nlp)
@@ -593,7 +587,6 @@ def question_generator(scene_lists, scene_lists_pred,
                         q_counter += 1
                     except ValueError:  ####### The question is not valid in the context
                         pass
-
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
@@ -624,7 +617,7 @@ def question_generator(scene_lists, scene_lists_pred,
             ans_sm = str(ans_sm)
             ans_nlp = answer_dict[ans_sm]
 
-    #         print(question_nlp, ans_nlp)
+            # print(question_nlp, ans_nlp)
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
@@ -645,7 +638,6 @@ def question_generator(scene_lists, scene_lists_pred,
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
-
 
 
     # =========================== question 9 ===========================
@@ -686,7 +678,7 @@ def question_generator(scene_lists, scene_lists_pred,
                         ans_sm = str(ans_sm)
                         ans_nlp = answer_dict[ans_sm]
 
-                #         print(question_nlp, ans_nlp)
+                        # print(question_nlp, ans_nlp)
                         question_family_index.append(q_id)
                         question_nl.append(question_nlp)
                         answer_nl.append(ans_nlp)
@@ -706,10 +698,8 @@ def question_generator(scene_lists, scene_lists_pred,
                     except ValueError:  ####### The question is not valid in the context
                         pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
-
 
 
     # =========================== question 10 ===========================
@@ -743,7 +733,7 @@ def question_generator(scene_lists, scene_lists_pred,
                 ans_sm = str(ans_sm)
                 ans_nlp = answer_dict[ans_sm]
 
-        #         print(question_nlp, ans_nlp)
+                # print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
@@ -762,10 +752,8 @@ def question_generator(scene_lists, scene_lists_pred,
             except ValueError:  ####### The question is not valid in the context
                 pass   
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id) 
-
 
 
     # =========================== question 11 ===========================
@@ -799,7 +787,7 @@ def question_generator(scene_lists, scene_lists_pred,
                 ans_sm = str(ans_sm)
                 ans_nlp = answer_dict[ans_sm]
 
-        #         print(question_nlp, ans_nlp)
+                # print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
@@ -818,7 +806,6 @@ def question_generator(scene_lists, scene_lists_pred,
             except ValueError:  ####### The question is not valid in the context
                 pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
         
@@ -831,14 +818,13 @@ def question_generator(scene_lists, scene_lists_pred,
     q_all_num = len(unique_actions)**0 * len(relation_family)**0 * len(logic_combinator_family)**0  * len(unique_loc)**1
 
     for action_1 in unique_loc:
-
         actions = [label_list[1][int(action_1)-1]]
 
         q_f_nlp = question_family['questions'][q_id]['texts']
         question_id = random.randint(0,len(q_f_nlp)-1)
         question_nlp = q_f_nlp[question_id]
 
-#         question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+        #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
         question_nlp = fixSentenceTense(question_nlp, actions, [], []) 
 
         # Try generating questions for all possible combinations
@@ -847,7 +833,7 @@ def question_generator(scene_lists, scene_lists_pred,
                                                 scene_lists)
             ans_nlp = label_list[0][int(ans_sm)-1]
 
-    #         print(question_nlp, ans_nlp)
+            # print(question_nlp, ans_nlp)
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
@@ -865,7 +851,6 @@ def question_generator(scene_lists, scene_lists_pred,
             q_counter += 1
         except ValueError:  ####### The question is not valid in the context
             pass
-
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
@@ -896,12 +881,12 @@ def question_generator(scene_lists, scene_lists_pred,
             # Try generating questions for all possible combinations
             try:
                 ans_sm = function_families[q_id](action_1, action_2, 
-                                                    scene_lists,
-                                                    question_validation)
+                                                 scene_lists,
+                                                 question_validation)
                 ans_sm = str(ans_sm)
                 ans_nlp = ans_sm
 
-        #         print(question_nlp, ans_nlp)
+                # print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
@@ -910,8 +895,8 @@ def question_generator(scene_lists, scene_lists_pred,
                 # Try generating answers for the question
                 try:
                     ans_sm_p = function_families[q_id](action_1, action_2, 
-                                                    scene_lists_pred,
-                                                    question_validation = False, valid_ext = True)
+                                                       scene_lists_pred,
+                                                       question_validation = False, valid_ext = True)
                     ans_nlp_p = str(ans_sm_p)
                 except ValueError:
                     ans_nlp_p = 'Invalid'
@@ -921,10 +906,8 @@ def question_generator(scene_lists, scene_lists_pred,
             except ValueError:  ####### The question is not valid in the context
                 pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
-        
         
 
     # =========================== question 14 ===========================
@@ -935,7 +918,6 @@ def question_generator(scene_lists, scene_lists_pred,
     q_all_num = len(unique_actions)**1 * len(relation_family)**0 * len(logic_combinator_family)**0 
 
     for action_1 in unique_actions:
-
         actions = [label_list[0][int(action_1)-1]]
 
         q_f_nlp = question_family['questions'][q_id]['texts']
@@ -952,7 +934,7 @@ def question_generator(scene_lists, scene_lists_pred,
             ans_sm = str(ans_sm)
             ans_nlp = ans_sm
 
-    #         print(question_nlp, ans_nlp)
+            # print(question_nlp, ans_nlp)
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
@@ -961,7 +943,7 @@ def question_generator(scene_lists, scene_lists_pred,
             # Try generating answers for the question
             try:
                 ans_sm_p = function_families[q_id](action_1, 
-                                             scene_lists_pred, valid_ext = True)
+                                                   scene_lists_pred, valid_ext = True)
                 ans_nlp_p = str(ans_sm_p)
             except ValueError:
                 ans_nlp_p = 'Invalid'
@@ -971,10 +953,8 @@ def question_generator(scene_lists, scene_lists_pred,
         except ValueError:  ####### The question is not valid in the context
             pass
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
-        
         
         
     # =========================== question 15 ===========================
@@ -1013,7 +993,7 @@ def question_generator(scene_lists, scene_lists_pred,
                     ans_sm = str(ans_sm)
                     ans_nlp = ans_sm
 
-            #         print(question_nlp, ans_nlp)
+                    # print(question_nlp, ans_nlp)
                     question_family_index.append(q_id)
                     question_nl.append(question_nlp)
                     answer_nl.append(ans_nlp)
@@ -1022,9 +1002,9 @@ def question_generator(scene_lists, scene_lists_pred,
                     # Try generating answers for the question
                     try:
                         ans_sm_p = function_families[q_id](action_1, action_2, 
-                                                     relation_1,
-                                                     scene_lists_pred,
-                                                     question_validation = False, valid_ext = True)
+                                                           relation_1,
+                                                           scene_lists_pred,
+                                                           question_validation = False, valid_ext = True)
                         ans_nlp_p = str(ans_sm_p)
                     except ValueError:
                         ans_nlp_p = 'Invalid'
@@ -1033,7 +1013,6 @@ def question_generator(scene_lists, scene_lists_pred,
                     q_counter += 1
                 except ValueError:  ####### The question is not valid in the context
                     pass
-
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id) 
