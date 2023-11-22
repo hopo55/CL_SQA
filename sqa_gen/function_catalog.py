@@ -1,7 +1,6 @@
 # org function catalog with None in scenelist, in use now.
 import numpy as np
-
-
+import torch
     
 ################### Filtering ###################
 
@@ -19,9 +18,15 @@ def fc_filter_action_type(actionID , scene_lists):
     """
     
     scene_list_1 = scene_lists[0]
-    if scene_list_1 is None:
+    # if scene_list_1 is None:
+    #     return [None, scene_lists[1]]
+    if scene_list_1 is None or len(scene_list_1) == 0 or len(scene_list_1[0]) == 0:
         return [None, scene_lists[1]]
-        
+    
+    # scene_list_1을 텐서로 변환
+    scene_list_1 = [torch.tensor(element) for element in scene_list_1]
+    scene_list_1 = torch.stack(scene_list_1, dim=0)
+    
     action_ind = scene_list_1[1, :] == actionID
     scene_list_1 = scene_list_1[:, action_ind]
     
@@ -63,11 +68,17 @@ def fc_relate(scene_lists, actionID, relation, valid_ext = False):
     scene_list_1 = scene_lists[0]
     scene_list_2 = scene_lists[1]
     
-    if scene_list_1 is None:
+    # if scene_list_1 is None:
+        # return [None, scene_lists[1]]
+    if scene_list_1 is None or len(scene_list_1) == 0 or len(scene_list_1[0]) == 0:
         return [None, scene_lists[1]]
     
+    # scene_list_1을 텐서로 변환
+    scene_list_1 = [torch.tensor(element) for element in scene_list_1]
+    scene_list_1 = torch.stack(scene_list_1, dim=0)
+    
     if relation == "While":
-        scene_list_1_ = np.concatenate( (scene_list_1, scene_list_1[3:4, :]+scene_list_1[2:3:, :]), axis = 0 )
+        scene_list_1_ = np.concatenate((scene_list_1, scene_list_1[3:4, :]+scene_list_1[2:3:, :]), axis = 0)
         loc_ind = np.where(scene_list_2[1,:] == actionID) # here the actionID refers to the locomotionID
         start_t = scene_list_2[3, loc_ind]
         end_t = scene_list_2[2, loc_ind] + start_t

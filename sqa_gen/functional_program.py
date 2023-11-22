@@ -45,7 +45,7 @@ function_families[2] = function_2
 def function_3(action_1, action_2, action_3, relation_1, relation_2, logic, scene, question_validation, valid_ext = False):
     
     node_1 = fc_relate(scene, action_2, relation_1, valid_ext)
-    node_2 = fc_relate(scene, action_3, relation_2, valid_ext )
+    node_2 = fc_relate(scene, action_3, relation_2, valid_ext)
     if logic == 'AND':
         node_3 = fc_and(node_1, node_2)
     elif logic == 'OR':
@@ -88,8 +88,8 @@ function_families[4] = function_4
 # How many times did the user <A> [relation] <B> [logic] [relation] <C> ?'
 def function_5(action_1, action_2, action_3, relation_1, relation_2, logic, scene, question_validation, valid_ext = False):
     
-    node_1 = fc_relate(scene, action_2, relation_1, valid_ext )
-    node_2 = fc_relate(scene, action_3, relation_2, valid_ext )
+    node_1 = fc_relate(scene, action_2, relation_1, valid_ext)
+    node_2 = fc_relate(scene, action_3, relation_2, valid_ext)
     if logic == 'AND':
         node_3 = fc_and(node_1, node_2)
     elif logic == 'OR':

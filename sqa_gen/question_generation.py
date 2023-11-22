@@ -1,8 +1,10 @@
+import os
 import json
 import random
 import numpy as np
-from pattern import en
+from pattern.text import en
 from sqa_gen.functional_program import *
+from tqdm import tqdm
 
 # Alternative approach: specify the tense (https://www.clips.uantwerpen.be/pages/pattern-en)
 def fixSentenceTense(question,actions,relations,combinators):
@@ -19,35 +21,32 @@ def fixSentenceTense(question,actions,relations,combinators):
         # get tense:
         verb = en.conjugate(verb, tense=question[actionCount][0], person=question[actionCount][1], number=question[actionCount][2])
         replacedAction = '<A'+str(actionCount)+'>'
-        if len( action_split )== 1:
+        if len(action_split)== 1:
             text = text.replace(
-                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], 
-                                                   verb)
+                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], verb)
         else:
             text = text.replace(
-                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], 
-                                                   verb + action[action.find(' '):])
-        actionCount = actionCount + 1
+                text[text.find(replacedAction):(text.find(replacedAction)+len(replacedAction))], verb + action[action.find(' '):])
+        # actionCount = actionCount + 1
     
     #Replace the relations
     relationCount = 1
     for relation in relations:
         replacedRelation = '[R'+str(relationCount)+']'
-#         print("Before replacement ("+replacedRelation+"): ", text)
-        text = text.replace(text[text.find(replacedRelation):(text.find(replacedRelation)+len(replacedRelation))], 
-                                               relation)
-#         print("After replacement: ",text)
+        # print("Before replacement ("+replacedRelation+"): ", text)
+        text = text.replace(text[text.find(replacedRelation):(text.find(replacedRelation)+len(replacedRelation))], relation)
+        # print("After replacement: ",text)
         relationCount = relationCount + 1
     
     #Replace the combinators
     combinatorCount = 1
     for combinator in combinators:
         replacedCombinator = '[C'+str(combinatorCount)+']'
-        text = text.replace(text[text.find(replacedCombinator):(text.find(replacedCombinator)+len(replacedCombinator))], 
-                                               combinator)
+        text = text.replace(text[text.find(replacedCombinator):(text.find(replacedCombinator)+len(replacedCombinator))], combinator)
         combinatorCount = combinatorCount + 1
         
     return text
+
 
 def question_generator(scene_lists, scene_lists_pred,
                        question_family_file, 
@@ -55,7 +54,7 @@ def question_generator(scene_lists, scene_lists_pred,
                        show_other = False,
                        question_validation = True,
                        diagnose = False 
-                      ):
+                       ):
     
     """
     Generate questions and answers in NLP form.
@@ -81,7 +80,7 @@ def question_generator(scene_lists, scene_lists_pred,
         print('===================================')
         print('Starting generating questions: ')
         print('Validation : ', question_validation)
-        print('Size of question families: ', len(question_family['questions'] ))
+        print('Size of question families: ', len(question_family['questions']))
         
     # dict for change binary answer to natural language
     answer_dict = {'True': 'Yes', 'False': 'No'}
@@ -93,26 +92,23 @@ def question_generator(scene_lists, scene_lists_pred,
     # all involvded actions and locomotions  # changed to all possible actions
     # whether using "other" as one of the activity: yes... change 2 places
     if show_other:
-        unique_actions = np.array( range(1, 19) ) # in total 18 classes, 1-18
-        unique_loc = np.array( range(1,6) )
+        unique_actions = np.array(range(1, 19)) # in total 18 classes, 1-18
+        unique_loc = np.array(range(1,6))
     else:
-        unique_actions = np.array( range(2, 19) )  # the 1st class is other
-        unique_loc = np.array( range(2,6) )
+        unique_actions = np.array(range(2, 19))  # the 1st class is other
+        unique_loc = np.array(range(2,6))
         
-#     unique_actions = np.unique( scene_lists[0][1] )
-#     unique_loc = np.unique( scene_lists[1][1] )
-
-
+    # unique_actions = np.unique(scene_lists[0][1])
+    # unique_loc = np.unique(scene_lists[1][1])
 
     # diagnose print
     if diagnose:
         print('\n===================================')
         print('Unique actions: ')
-        print( unique_actions)
+        print(unique_actions)
         print('Unique locomotions: ')
-        print( unique_loc)
+        print(unique_loc)
         
-    
     # initialize question/ans/q_tpye lists:
     question_family_index = []
     question_nl = []
@@ -122,7 +118,9 @@ def question_generator(scene_lists, scene_lists_pred,
     
     # generating questions: if using an automatic approach, need to use recursion. 
     
+
     # =========================== question 0 ===========================
+    print('=========================== question 0 ===========================')
     q_id = 0
     q_counter = 0
     q_all_num = len(unique_actions)**1 * len(relation_family)**0 * len(logic_combinator_family)**0 
@@ -130,20 +128,19 @@ def question_generator(scene_lists, scene_lists_pred,
     for action_1 in unique_actions:
         actions = [label_list[0][int(action_1)-1]]
         
-        
         q_f_nlp = question_family['questions'][q_id]['texts']
         question_id = random.randint(0,len(q_f_nlp)-1)
         question_nlp = q_f_nlp[question_id]
         
         question_nlp = fixSentenceTense(question_nlp, actions,[],[])
-            #question_nlp.replace('<A1>', action_1_nlp)
+        # question_nlp.replace('<A1>', action_1_nlp)
 
         # Try generating questions for all possible combinations
         try:         
-            ans_sm = str( function_families[q_id](action_1 , scene_lists) )
+            ans_sm = str(function_families[q_id](action_1 , scene_lists))
             ans_nlp = answer_dict[ans_sm]
 
-    #         print(question_nlp, ans_nlp)
+            # print(question_nlp, ans_nlp)
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
@@ -151,7 +148,7 @@ def question_generator(scene_lists, scene_lists_pred,
             
             # Try generating answers for the question
             try:
-                ans_sm_p = str( function_families[q_id](action_1 , scene_lists_pred, valid_ext = True) )
+                ans_sm_p = str(function_families[q_id](action_1 , scene_lists_pred, valid_ext = True))
                 ans_nlp_p = answer_dict[ans_sm_p]
             except ValueError:
                 ans_nlp_p = 'Invalid'
@@ -160,13 +157,13 @@ def question_generator(scene_lists, scene_lists_pred,
             q_counter += 1
         except ValueError:  ####### The question is not valid in the context
             pass
-        
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
 
 
     # =========================== question 1 ===========================
+    print('=========================== question 1 ===========================')
     q_id = 1
     q_counter = 0
     q_all_num = len(unique_actions)**1 * len(relation_family)**0 * len(logic_combinator_family)**0 
@@ -182,10 +179,10 @@ def question_generator(scene_lists, scene_lists_pred,
         
         # Try generating questions for all possible combinations
         try:         
-            ans_sm = str( function_families[q_id](action_1 , scene_lists) )
+            ans_sm = str(function_families[q_id](action_1 , scene_lists))
             ans_nlp = ans_sm
 
-            #         print(question_nlp, ans_nlp)
+            # print(question_nlp, ans_nlp)
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
@@ -193,7 +190,7 @@ def question_generator(scene_lists, scene_lists_pred,
             
             # Try generating answers for the question
             try:
-                ans_sm_p = str( function_families[q_id](action_1 , scene_lists_pred, valid_ext = True) )
+                ans_sm_p = str(function_families[q_id](action_1 , scene_lists_pred, valid_ext = True))
                 ans_nlp_p = ans_sm_p
             except ValueError:
                 ans_nlp_p = 'Invalid'
@@ -208,6 +205,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 2 ===========================
+    print('=========================== question 2 ===========================')
     # for question 2
     q_id = 2
     q_counter = 0
@@ -220,25 +218,25 @@ def question_generator(scene_lists, scene_lists_pred,
                     continue
 
                 actions = [label_list[0][int(action_1)-1],label_list[0][int(action_2)-1]]
-                #action_2_nlp = label_list[0][int(action_2)-1]
+                # action_2_nlp = label_list[0][int(action_2)-1]
 
                 q_f_nlp = question_family['questions'][q_id]['texts']
                 question_id = random.randint(0,len(q_f_nlp)-1)
                 question_nlp = q_f_nlp[question_id]
                 question_nlp = fixSentenceTense(question_nlp, actions,[relation],[])
-                #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
-                #question_nlp = question_nlp.replace('<A2>', action_2_nlp)
-                #question_nlp = question_nlp.replace('[R1]', relation)
+                # question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+                # question_nlp = question_nlp.replace('<A2>', action_2_nlp)
+                # question_nlp = question_nlp.replace('[R1]', relation)
 
                 # Try generating questions for all possible combinations
                 try:         
-                    ans_sm = str( function_families[q_id](action_1, action_2, 
-                                                          relation, 
-                                                          scene_lists,
-                                                          question_validation) )
+                    ans_sm = str(function_families[q_id](action_1, action_2, 
+                                                         relation, 
+                                                         scene_lists,
+                                                         question_validation))
                     ans_nlp = answer_dict[ans_sm]
 
-            #         print(question_nlp, ans_nlp)
+                    # print(question_nlp, ans_nlp)
                     question_family_index.append(q_id)
                     question_nl.append(question_nlp)
                     answer_nl.append(ans_nlp)
@@ -246,10 +244,10 @@ def question_generator(scene_lists, scene_lists_pred,
                     
                     # Try generating answers for the question
                     try:
-                        ans_sm_p = str( function_families[q_id](action_1, action_2, 
-                                                          relation, 
-                                                          scene_lists_pred,
-                                                          question_validation = False, valid_ext = True) )
+                        ans_sm_p = str(function_families[q_id](action_1, action_2, 
+                                                         relation, 
+                                                         scene_lists_pred,
+                                                         question_validation = False, valid_ext = True))
                         ans_nlp_p = answer_dict[ans_sm_p]
                     except ValueError:
                         ans_nlp_p = 'Invalid'
@@ -262,16 +260,18 @@ def question_generator(scene_lists, scene_lists_pred,
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
 
+
     # =========================== question 3 ===========================
+    print('=========================== question 3 ===========================')
     # for question 3
     q_id = 3
     q_counter = 0
     q_all_num = len(unique_actions)**3 * len(relation_family)**2 * len(logic_combinator_family)**1 
 
-    for c_logic_1 in logic_combinator_family:
-        for relation_1 in relation_family:
-            for relation_2 in relation_family:
-                for action_1 in unique_actions:
+    for c_logic_1 in tqdm(logic_combinator_family):
+        for relation_1 in tqdm(relation_family):
+            for relation_2 in tqdm(relation_family):
+                for action_1 in tqdm(unique_actions):
                     for action_2 in unique_actions:
                         if action_2 == action_1: # avoid meaningless questions
                             continue
@@ -280,25 +280,24 @@ def question_generator(scene_lists, scene_lists_pred,
                                 continue
                             if action_2 == action_3 and relation_1 == relation_2: # avoid meaningless questions
                                 continue
-                            
 
                             actions =  [label_list[0][int(action_1)-1], label_list[0][int(action_2)-1], label_list[0][int(action_3)-1]]
                             relations = [relation_1, relation_2]
                             combinators = [c_logic_1]
-                            #action_1_nlp = label_list[0][int(action_1)-1]
-                            #action_2_nlp = label_list[0][int(action_2)-1]
-                            #action_3_nlp = label_list[0][int(action_3)-1]
+                            # action_1_nlp = label_list[0][int(action_1)-1]
+                            # action_2_nlp = label_list[0][int(action_2)-1]
+                            # action_3_nlp = label_list[0][int(action_3)-1]
 
                             q_f_nlp = question_family['questions'][q_id]['texts']
                             question_id = random.randint(0,len(q_f_nlp)-1)
                             question_nlp = q_f_nlp[question_id]
                             question_nlp = fixSentenceTense(question_nlp, actions, relations, combinators)
-                            #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
-                            #question_nlp = question_nlp.replace('<A2>', action_2_nlp)
-                            #question_nlp = question_nlp.replace('<A3>', action_3_nlp)
-                            #question_nlp = question_nlp.replace('[R1]', relation_1)
-                            #question_nlp = question_nlp.replace('[R2]', relation_2)
-                            #question_nlp = question_nlp.replace('[C1]', c_logic_1)
+                            # question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+                            # question_nlp = question_nlp.replace('<A2>', action_2_nlp)
+                            # question_nlp = question_nlp.replace('<A3>', action_3_nlp)
+                            # question_nlp = question_nlp.replace('[R1]', relation_1)
+                            # question_nlp = question_nlp.replace('[R2]', relation_2)
+                            # question_nlp = question_nlp.replace('[C1]', c_logic_1)
 
                             # Try generating questions for all possible combinations
                             try:
@@ -307,14 +306,14 @@ def question_generator(scene_lists, scene_lists_pred,
                                                                  c_logic_1, 
                                                                  scene_lists,
                                                                  question_validation) 
-                                ans_sm = str( ans_sm )
+                                ans_sm = str(ans_sm)
                                 ans_nlp = answer_dict[ans_sm]
 
-                        #         print(question_nlp, ans_nlp)
+                                # print(question_nlp, ans_nlp)
                                 question_family_index.append(q_id)
                                 question_nl.append(question_nlp)
                                 answer_nl.append(ans_nlp)
-                                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations)+ '_'+str(combinators) )
+                                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations)+ '_'+str(combinators))
 
                                 # Try generating answers for the question
                                 try:
@@ -332,13 +331,12 @@ def question_generator(scene_lists, scene_lists_pred,
                             except ValueError:  ####### The question is not valid in the context
                                 pass   
 
-
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
 
 
-
     # =========================== question 4 ===========================
+    print('=========================== question 4 ===========================')
     # for question 4
     q_id = 4
     q_counter = 0
@@ -352,17 +350,17 @@ def question_generator(scene_lists, scene_lists_pred,
 
                 actions = [label_list[0][int(action_1)-1],label_list[0][int(action_2)-1]]
                 relations = [relation_1]
-                #action_1_nlp = label_list[0][int(action_1)-1]
-                #action_2_nlp = label_list[0][int(action_2)-1]
+                # action_1_nlp = label_list[0][int(action_1)-1]
+                # action_2_nlp = label_list[0][int(action_2)-1]
 
                 q_f_nlp = question_family['questions'][q_id]['texts']
                 question_id = random.randint(0,len(q_f_nlp)-1)
                 question_nlp = q_f_nlp[question_id]
 
                 question_nlp = fixSentenceTense(question_nlp, actions, relations, [])
-                #question_nlp = question_nlp.replace('<A1>', action_1_nlp)
-                #question_nlp = question_nlp.replace('<A2>', action_2_nlp)
-                #question_nlp = question_nlp.replace('[R1]', relation_1)
+                # question_nlp = question_nlp.replace('<A1>', action_1_nlp)
+                # question_nlp = question_nlp.replace('<A2>', action_2_nlp)
+                # question_nlp = question_nlp.replace('[R1]', relation_1)
 
                 # Try generating questions for all possible combinations
                 try:
@@ -370,15 +368,15 @@ def question_generator(scene_lists, scene_lists_pred,
                                                      relation_1, 
                                                      scene_lists,
                                                      question_validation) 
-                    ans_sm = str( ans_sm )
-    #                 ans_nlp = answer_dict[ans_sm]
+                    ans_sm = str(ans_sm)
+                    # ans_nlp = answer_dict[ans_sm]
                     ans_nlp = ans_sm
 
-            #         print(question_nlp, ans_nlp)
+                    # print(question_nlp, ans_nlp)
                     question_family_index.append(q_id)
                     question_nl.append(question_nlp)
                     answer_nl.append(ans_nlp)
-                    question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations) )
+                    question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations))
                     
                     # Try generating answers for the question
                     try:
@@ -390,20 +388,16 @@ def question_generator(scene_lists, scene_lists_pred,
                     except ValueError:
                         ans_nlp_p = 'Invalid'
                     answer_nl_p.append(ans_nlp_p)
-                                
-
                     q_counter += 1
                 except ValueError:  ####### The question is not valid in the context
                     pass
-
 
     if diagnose:
         question_summary(q_counter, q_all_num, q_id)
 
 
-
-
     # =========================== question 5 ===========================
+    print('=========================== question 5 ===========================')
     # for question 5
     q_id = 5
     q_counter = 0
@@ -449,7 +443,7 @@ def question_generator(scene_lists, scene_lists_pred,
                                                                  c_logic_1, 
                                                                  scene_lists,
                                                                  question_validation) 
-                                ans_sm = str( ans_sm )
+                                ans_sm = str(ans_sm)
                 #                 ans_nlp = answer_dict[ans_sm]
                                 ans_nlp = ans_sm
 
@@ -457,7 +451,7 @@ def question_generator(scene_lists, scene_lists_pred,
                                 question_family_index.append(q_id)
                                 question_nl.append(question_nlp)
                                 answer_nl.append(ans_nlp)
-                                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations)+ '_'+str(combinators) )
+                                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations)+ '_'+str(combinators))
 
                                 # Try generating answers for the question
                                 try:
@@ -466,7 +460,7 @@ def question_generator(scene_lists, scene_lists_pred,
                                                                  c_logic_1, 
                                                                  scene_lists_pred,
                                                                  question_validation = False, valid_ext = True) 
-                                    ans_nlp_p = str( ans_sm_p )
+                                    ans_nlp_p = str(ans_sm_p)
                                 except ValueError:
                                     ans_nlp_p = 'Invalid'
                                 answer_nl_p.append(ans_nlp_p)
@@ -483,6 +477,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 6 ===========================
+    print('=========================== question 6 ===========================')
     # for question 6
     q_id = 6
     q_counter = 0
@@ -508,8 +503,8 @@ def question_generator(scene_lists, scene_lists_pred,
             try:
                 ans_sm = function_families[q_id](action_1,
                                                  relation_1, 
-                                                 scene_lists )
-    #             ans_sm = str( ans_sm )
+                                                 scene_lists)
+    #             ans_sm = str(ans_sm)
         #                 ans_nlp = answer_dict[ans_sm]
                 ans_nlp = label_list[0][int(ans_sm)-1]
 
@@ -517,7 +512,7 @@ def question_generator(scene_lists, scene_lists_pred,
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
-                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations) )
+                question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations))
                 
                 # Try generating answers for the question
                 try:
@@ -539,6 +534,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 7 ===========================
+    print('=========================== question 7 ===========================')
     # for question 7
     q_id = 7
     q_counter = 0
@@ -581,7 +577,7 @@ def question_generator(scene_lists, scene_lists_pred,
                         question_family_index.append(q_id)
                         question_nl.append(question_nlp)
                         answer_nl.append(ans_nlp)
-                        question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations) )
+                        question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations))
                         
                         # Try generating answers for the question
                         try:
@@ -604,6 +600,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 8 ===========================
+    print('=========================== question 8 ===========================')
     # for question 8
     q_id = 8
     q_counter = 0
@@ -624,7 +621,7 @@ def question_generator(scene_lists, scene_lists_pred,
         try: 
             ans_sm = function_families[q_id](action_1, 
                                              scene_lists)
-            ans_sm = str( ans_sm )
+            ans_sm = str(ans_sm)
             ans_nlp = answer_dict[ans_sm]
 
     #         print(question_nlp, ans_nlp)
@@ -652,6 +649,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 9 ===========================
+    print('=========================== question 9 ===========================')
     # for question 9
     q_id = 9
     q_counter = 0
@@ -685,14 +683,14 @@ def question_generator(scene_lists, scene_lists_pred,
                                                          relation_1, relation_2, 
                                                          scene_lists)
 
-                        ans_sm = str( ans_sm )
+                        ans_sm = str(ans_sm)
                         ans_nlp = answer_dict[ans_sm]
 
                 #         print(question_nlp, ans_nlp)
                         question_family_index.append(q_id)
                         question_nl.append(question_nlp)
                         answer_nl.append(ans_nlp)
-                        question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations) )
+                        question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations))
                         
                         # Try generating answers for the question
                         try:
@@ -715,6 +713,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 10 ===========================
+    print('=========================== question 10 ===========================')
     # for question 10
     q_id = 10
     q_counter = 0
@@ -741,14 +740,14 @@ def question_generator(scene_lists, scene_lists_pred,
             try:
                 ans_sm = function_families[q_id](action_1, action_2, 
                                                  scene_lists)
-                ans_sm = str( ans_sm )
+                ans_sm = str(ans_sm)
                 ans_nlp = answer_dict[ans_sm]
 
         #         print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
-                question_struct.append(str(q_id)+'_'+str(actions) )
+                question_struct.append(str(q_id)+'_'+str(actions))
                 
                 # Try generating answers for the question
                 try:
@@ -770,6 +769,7 @@ def question_generator(scene_lists, scene_lists_pred,
 
 
     # =========================== question 11 ===========================
+    print('=========================== question 11 ===========================')
     # for question 11
     q_id = 11
     q_counter = 0
@@ -796,14 +796,14 @@ def question_generator(scene_lists, scene_lists_pred,
             try:
                 ans_sm = function_families[q_id](action_1, action_2, 
                                                  scene_lists)
-                ans_sm = str( ans_sm )
+                ans_sm = str(ans_sm)
                 ans_nlp = answer_dict[ans_sm]
 
         #         print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
-                question_struct.append(str(q_id)+'_'+str(actions) )
+                question_struct.append(str(q_id)+'_'+str(actions))
                 
                 # Try generating answers for the question
                 try:
@@ -824,6 +824,7 @@ def question_generator(scene_lists, scene_lists_pred,
         
         
     # =========================== question 12 ===========================
+    print('=========================== question 12 ===========================')
     # for question 12
     q_id = 12
     q_counter = 0
@@ -850,7 +851,7 @@ def question_generator(scene_lists, scene_lists_pred,
             question_family_index.append(q_id)
             question_nl.append(question_nlp)
             answer_nl.append(ans_nlp)
-            question_struct.append(str(q_id)+'_'+str(actions) )
+            question_struct.append(str(q_id)+'_'+str(actions))
 
             # Try generating answers for the question
             try:
@@ -871,6 +872,7 @@ def question_generator(scene_lists, scene_lists_pred,
         
         
     # =========================== question 13 ===========================
+    print('=========================== question 13 ===========================')
     # for question 13
     q_id = 13
     q_counter = 0
@@ -896,14 +898,14 @@ def question_generator(scene_lists, scene_lists_pred,
                 ans_sm = function_families[q_id](action_1, action_2, 
                                                     scene_lists,
                                                     question_validation)
-                ans_sm = str( ans_sm )
+                ans_sm = str(ans_sm)
                 ans_nlp = ans_sm
 
         #         print(question_nlp, ans_nlp)
                 question_family_index.append(q_id)
                 question_nl.append(question_nlp)
                 answer_nl.append(ans_nlp)
-                question_struct.append(str(q_id)+'_'+str(actions) )
+                question_struct.append(str(q_id)+'_'+str(actions))
 
                 # Try generating answers for the question
                 try:
@@ -926,6 +928,7 @@ def question_generator(scene_lists, scene_lists_pred,
         
 
     # =========================== question 14 ===========================
+    print('=========================== question 14 ===========================')
     # for question 14
     q_id = 14
     q_counter = 0
@@ -946,7 +949,7 @@ def question_generator(scene_lists, scene_lists_pred,
         try:
             ans_sm = function_families[q_id](action_1, 
                                              scene_lists)
-            ans_sm = str( ans_sm )
+            ans_sm = str(ans_sm)
             ans_nlp = ans_sm
 
     #         print(question_nlp, ans_nlp)
@@ -975,6 +978,7 @@ def question_generator(scene_lists, scene_lists_pred,
         
         
     # =========================== question 15 ===========================
+    print('=========================== question 15 ===========================')
     # for question 15
     q_id = 15
     q_counter = 0
@@ -1006,14 +1010,14 @@ def question_generator(scene_lists, scene_lists_pred,
                                                      relation_1,
                                                      scene_lists,
                                                      question_validation)
-                    ans_sm = str( ans_sm )
+                    ans_sm = str(ans_sm)
                     ans_nlp = ans_sm
 
             #         print(question_nlp, ans_nlp)
                     question_family_index.append(q_id)
                     question_nl.append(question_nlp)
                     answer_nl.append(ans_nlp)
-                    question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations) )
+                    question_struct.append(str(q_id)+'_'+str(actions) + '_' + str(relations))
                     
                     # Try generating answers for the question
                     try:
@@ -1036,5 +1040,6 @@ def question_generator(scene_lists, scene_lists_pred,
         
         
     # ====================== Question Generation Finished ================    
+    print('=========================== Question Generation Finished ===========================')
     
     return question_family_index, question_nl, answer_nl, answer_nl_p, question_struct

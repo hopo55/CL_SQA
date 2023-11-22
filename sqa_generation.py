@@ -45,6 +45,24 @@ def gen_main():
     
     _, label_list, _ = extract_data_from_file('S1-ADL5.dat',  args.datapath, plot_option = False, show_other = False)
 
+    label_list[0][0] = 'Do other activities'
+    label_list[0][1] = 'Open the front Door'
+    label_list[0][2] = 'Open the back Door'
+    label_list[0][3] = 'Close the front Door'
+    label_list[0][4] = 'Close the back Door'
+    label_list[0][5] = 'Open the Fridge'
+    label_list[0][6] = 'Close the Fridge'
+    label_list[0][7] = 'Open the Dishwasher'
+    label_list[0][8] = 'Close the Dishwasher'
+    label_list[0][9] = 'Open the first Drawer'
+    label_list[0][10] = 'Close the first Drawer'
+    label_list[0][11] = 'Open the second Drawer'
+    label_list[0][12] = 'Close the second Drawer'
+    label_list[0][13] = 'Open the third Drawer'
+    label_list[0][14] = 'Close the third Drawer'
+    label_list[0][15] = 'Clean the Table'
+    label_list[0][16] = 'Drink from the Cup'
+    label_list[0][17] = 'Toggle the Switch'
 
     file_list = [ i for i in os.listdir(args.datapath) if '.dat' in i]
     save_file = 's1234_' + str(args.window_size) + '_' + str(args.stride)

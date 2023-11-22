@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 from tqdm import tqdm
 from datetime import date
@@ -9,6 +10,7 @@ from sqa_gen.data_extraction import extract_data_from_file, data_split_tools, se
 from sqa_gen.train_model import train_opp_model
 from models.ConvLSTM import ConvLSTM
 from sqa_gen.question_generation import question_generator
+from sqa_gen.synonym_change import synonym_change
 
 def sqa_gen_engine(args,
                    file_list,
@@ -111,3 +113,40 @@ def sqa_gen_engine(args,
                                                                                                              show_other = show_other,
                                                                                                              question_validation = True,
                                                                                                              diagnose = False)
+
+            for new_qf_ind, new_q_i, new_ans_i, new_ans_i_p, new_q_struct_i in zip(question_family_index, question_nl, answer_nl, answer_nl_p, question_struct):
+
+                new_question_data = {}
+                new_question_data['context_source_file'] = source_file_i
+                new_question_data['context_start_point'] = startpoint
+                new_question_data['context_index'] = context_counter
+                # adding question variations by changing words to synonyms
+                new_question_data['question'] = synonym_change(new_q_i) 
+                new_question_data['answer'] = new_ans_i
+                new_question_data['pred_answer'] = new_ans_i_p # predicted answer using neural symbolic appraoch
+                new_question_data['question_family_index'] = new_qf_ind
+                new_question_data['question_structure'] = new_q_struct_i
+                new_question_data['question_index'] = 0 # need to get modified later
+                new_question_data['split'] = data_split
+
+                gen_sqa_data['questions'].append(new_question_data)
+
+            context_counter += 1
+
+
+    print('The total number of generated questions: ',len(gen_sqa_data['questions']))
+
+    # Modify the question index:
+    for q_idx, q_i in enumerate(gen_sqa_data['questions']):
+        q_i['question_index'] = q_idx
+
+    # saving generated questions
+
+    save_file = sqa_data_name+'.json'
+    save_folder = save_folder
+    save_path = save_folder+'/'+save_file
+
+    with open(save_path, 'w') as outfile:
+        json.dump(gen_sqa_data, outfile)
+        
+    return gen_sqa_data
